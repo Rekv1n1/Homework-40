@@ -15,7 +15,7 @@ function clearTokens() {
 function logout() {
   loggedOut = true;
   clearTokens();
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 
 // Кнопка «Выйти» подключается первой и не зависит от остального кода
@@ -24,7 +24,7 @@ logoutBtn.addEventListener('click', logout);
 // Если вернулись на страницу кнопкой «Назад» (кеш браузера) — проверить токен ещё раз
 window.addEventListener('pageshow', (event) => {
   if (event.persisted && !localStorage.getItem('accessToken')) {
-    window.location.replace('login.html');
+    window.location.replace('index.html');
   }
 });
 
@@ -67,7 +67,7 @@ async function loadProfile() {
 
   // Нет токена — на страницу входа
   if (!token) {
-    window.location.replace('login.html');
+    window.location.replace('index.html');
     return;
   }
 
