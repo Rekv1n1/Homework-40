@@ -58,7 +58,7 @@ form.addEventListener('submit', async (event) => {
 
     window.location.href = 'profile.html';
   } catch (error) {
-    if (error.response && error.response.status === 400) {
+    if (error.response && [400, 401].includes(error.response.status)) {
       formError.textContent = 'Неверный логин или пароль';
     } else {
       formError.textContent = 'Не удалось выполнить вход. Проверьте подключение и попробуйте снова';

@@ -83,7 +83,7 @@ async function loadProfile() {
   } catch (error) {
     if (loggedOut) return;
 
-    if (error.response && error.response.status === 401) {
+    if (error.response && [401, 403].includes(error.response.status)) {
       // Токен просрочен или испорчен — пробуем обновить
       try {
         const newToken = await refreshTokens();
