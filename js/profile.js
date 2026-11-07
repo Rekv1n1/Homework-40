@@ -5,15 +5,28 @@ const profileEl = document.getElementById('profile');
 const errorEl = document.getElementById('profile-error');
 const logoutBtn = document.getElementById('logout-btn');
 
+let loggedOut = false; // после выхода ничего не должно снова сохранять токены
+
 function clearTokens() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
 }
 
 function logout() {
+  loggedOut = true;
   clearTokens();
-  window.location.replace('login.html');
+  window.location.href = 'login.html';
 }
+
+// Кнопка «Выйти» подключается первой и не зависит от остального кода
+logoutBtn.addEventListener('click', logout);
+
+// Если вернулись на страницу кнопкой «Назад» (кеш браузера) — проверить токен ещё раз
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted && !localStorage.getItem('accessToken')) {
+    window.location.replace('login.html');
+  }
+});
 
 // Запрос профиля с заголовком Authorization: Bearer
 function fetchProfile(token) {
@@ -29,12 +42,16 @@ async function refreshTokens() {
 
   const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
 
+  if (loggedOut) throw new Error('Пользователь вышел');
+
   localStorage.setItem('accessToken', response.data.accessToken);
   localStorage.setItem('refreshToken', response.data.refreshToken);
   return response.data.accessToken;
 }
 
 function renderProfile(user) {
+  if (loggedOut) return;
+
   document.getElementById('avatar').src = user.image;
   document.getElementById('full-name').textContent = `${user.firstName} ${user.lastName}`;
   document.getElementById('email').textContent = user.email;
@@ -54,10 +71,18 @@ async function loadProfile() {
     return;
   }
 
+  if (typeof axios === 'undefined') {
+    loadingEl.hidden = true;
+    errorEl.textContent = 'Не загрузилась библиотека axios. Проверьте интернет и обновите страницу';
+    return;
+  }
+
   try {
     const response = await fetchProfile(token);
     renderProfile(response.data);
   } catch (error) {
+    if (loggedOut) return;
+
     if (error.response && error.response.status === 401) {
       // Токен просрочен или испорчен — пробуем обновить
       try {
@@ -66,7 +91,7 @@ async function loadProfile() {
         renderProfile(retry.data);
       } catch (refreshError) {
         // Обновить не получилось — выход
-        logout();
+        if (!loggedOut) logout();
       }
     } else {
       loadingEl.hidden = true;
@@ -74,7 +99,5 @@ async function loadProfile() {
     }
   }
 }
-
-logoutBtn.addEventListener('click', logout);
 
 loadProfile();
